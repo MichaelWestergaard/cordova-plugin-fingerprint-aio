@@ -28,6 +28,7 @@ public class Fingerprint extends CordovaPlugin {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         Log.v(TAG, "Init Fingerprint");
+        Log.v(TAG, "Testing");
         mPromptInfoBuilder = new PromptInfo.Builder(cordova.getActivity());
     }
 
