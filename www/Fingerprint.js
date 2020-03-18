@@ -23,22 +23,72 @@ Fingerprint.prototype.BIOMETRIC_TYPE_FINGERPRINT = "finger";
 Fingerprint.prototype.BIOMETRIC_TYPE_FACE = "face";
 Fingerprint.prototype.BIOMETRIC_TYPE_COMMON = "biometric";
 
-Fingerprint.prototype.show = function (params, successCallback, errorCallback) {
-  cordova.exec(
-    successCallback,
-    errorCallback,
-    "Fingerprint",
-    "authenticate",
-    [params]
-  );
-};
-
 Fingerprint.prototype.isAvailable = function (successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "isAvailable",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.save = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "save",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.verify = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "verify",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.delete = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "delete",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.has = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "has",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.move = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "move",
+    [{}]
+  );
+};
+
+Fingerprint.prototype.setLocale = function (successCallback, errorCallback) {
+  cordova.exec(
+    successCallback,
+    errorCallback,
+    "Fingerprint",
+    "setLocale",
     [{}]
   );
 };
