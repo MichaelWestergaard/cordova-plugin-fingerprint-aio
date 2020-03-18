@@ -33,63 +33,63 @@ Fingerprint.prototype.isAvailable = function (successCallback, errorCallback) {
   );
 };
 
-Fingerprint.prototype.save = function (successCallback, errorCallback) {
+Fingerprint.prototype.save = function (key, password, userAuthenticationRequired, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "save",
-    [{}]
+    [key, password, userAuthenticationRequired]
   );
 };
 
-Fingerprint.prototype.verify = function (successCallback, errorCallback) {
+Fingerprint.prototype.verify = function (key, message, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "verify",
-    [{}]
+    [key, message]
   );
 };
 
-Fingerprint.prototype.delete = function (successCallback, errorCallback) {
+Fingerprint.prototype.delete = function (key, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "delete",
-    [{}]
+    [key]
   );
 };
 
-Fingerprint.prototype.has = function (successCallback, errorCallback) {
+Fingerprint.prototype.has = function (key, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "has",
-    [{}]
+    [key]
   );
 };
 
-Fingerprint.prototype.move = function (successCallback, errorCallback) {
+Fingerprint.prototype.move = function (key, packageName, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "move",
-    [{}]
+    [key, packageName]
   );
 };
 
-Fingerprint.prototype.setLocale = function (successCallback, errorCallback) {
+Fingerprint.prototype.setLocale = function (locale, successCallback, errorCallback) {
   cordova.exec(
     successCallback,
     errorCallback,
     "Fingerprint",
     "setLocale",
-    [{}]
+    [locale]
   );
 };
 
