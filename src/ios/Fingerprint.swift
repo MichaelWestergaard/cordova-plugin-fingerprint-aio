@@ -1,8 +1,24 @@
 import Foundation
 import LocalAuthentication
+import UIKit
+import "KeychainWrapper.h"
+import Cordova
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
+/* Maybe for later if above does not work.
+#import <UIKit/UIKit.h>
+#import "KeychainWrapper.h"
+#import <Foundation/Foundation.h>
+#import <Cordova/CDV.h>
+#import <LocalAuthentication/LocalAuthentication.h>
+*/
 
 @objc(Fingerprint) class Fingerprint : CDVPlugin {
+
+@property (strong,nonatomic)NSString* TAG;
+@property (strong, nonatomic) KeychainWrapper* MyKeychainWrapper;
+@property (strong, nonatomic) LAContext* laContext;
 
     enum PluginError:Int {
         case BIOMETRIC_UNKNOWN_ERROR = -100
@@ -19,6 +35,120 @@ import LocalAuthentication
         var code: Int
     }
 
+@objc(setLocale:)
+    func setLocale(_ command: CDVInvokedUrlCommand){
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+@objc(has:)
+    func has(_ command: CDVInvokedUrlCommand){
+  	self.TAG = (NSString*)[command.arguments objectAtIndex:0];
+    BOOL hasLoginKey = [[NSUserDefaults standardUserDefaults] boolForKey:self.TAG];
+    if(hasLoginKey){
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+    else{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"No Password in chain"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
+
+@objc(save:)
+    func save(_ command: CDVInvokedUrlCommand){
+	 	self.TAG = (NSString*)[command.arguments objectAtIndex:0];
+    NSString* password = (NSString*)[command.arguments objectAtIndex:1];
+    @try {
+        self.MyKeychainWrapper = [[KeychainWrapper alloc]init];
+        [self.MyKeychainWrapper mySetObject:password forKey:(__bridge id)(kSecValueData)];
+        [self.MyKeychainWrapper writeToKeychain];
+        [[NSUserDefaults standardUserDefaults]setBool:true forKey:self.TAG];
+        [[NSUserDefaults standardUserDefaults]synchronize];
+
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+    @catch(NSException *exception){
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"Password could not be save in chain"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
+
+@objc(delete:)
+    func dekete(_ command: CDVInvokedUrlCommand){
+	 	self.TAG = (NSString*)[command.arguments objectAtIndex:0];
+    @try {
+
+        if(self.TAG && [[NSUserDefaults standardUserDefaults] objectForKey:self.TAG])
+        {
+            self.MyKeychainWrapper = [[KeychainWrapper alloc]init];
+            [self.MyKeychainWrapper resetKeychainItem];
+        }
+
+
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:self.TAG];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+    @catch(NSException *exception) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"Could not delete password from chain"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
+
+
+@objc(verify:)
+    func verify(_ command: CDVInvokedUrlCommand){
+	 	self.TAG = (NSString*)[command.arguments objectAtIndex:0];
+	  NSString* message = (NSString*)[command.arguments objectAtIndex:1];
+    self.laContext = [[LAContext alloc] init];
+    self.MyKeychainWrapper = [[KeychainWrapper alloc]init];
+
+    BOOL hasLoginKey = [[NSUserDefaults standardUserDefaults] boolForKey:self.TAG];
+    if(hasLoginKey){
+        NSError * error;
+        BOOL touchIDAvailable = [self.laContext canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
+
+        if(touchIDAvailable){
+            [self.laContext evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics localizedReason:message reply:^(BOOL success, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+
+                if(success){
+                    NSString *password = [self.MyKeychainWrapper myObjectForKey:@"v_Data"];
+                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: password];
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                }
+                    if(error != nil) {
+                        NSDictionary *errorDictionary = @{@"OS":@"iOS",@"ErrorCode":[NSString stringWithFormat:@"%li", (long)error.code],@"ErrorMessage":error.localizedDescription};
+                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:errorDictionary];
+                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                    }
+                });
+            }];
+
+        }
+        else{
+            if(error)
+            {
+                //If an error is returned from LA Context (should always be true in this situation)
+                NSDictionary *errorDictionary = @{@"OS":@"iOS",@"ErrorCode":[NSString stringWithFormat:@"%li", (long)error.code],@"ErrorMessage":error.localizedDescription};
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:errorDictionary];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+            else
+            {
+                //Should never come to this, but we treat it anyway
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"Touch ID not available"];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+        }
+    }
+    else{
+           CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"-1"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
 
     @objc(isAvailable:)
     func isAvailable(_ command: CDVInvokedUrlCommand){
@@ -51,6 +181,8 @@ import LocalAuthentication
                 case .faceID:
                     biometryType = "face"
                 }
+            } else {
+                biometryType = "finger";
             }
 
             pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: biometryType);
