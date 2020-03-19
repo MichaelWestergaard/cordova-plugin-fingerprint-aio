@@ -120,13 +120,12 @@ public class Fingerprint extends CordovaPlugin {
 
     this.mCallbackContext = callbackContext;
     Log.v(TAG, "Fingerprint action: " + action);
-    Log.d(TAG, args.toString());
 
     if (action.equals("isAvailable")) {
       executeIsAvailable();
       return true;
     } else if (action.equals("save")) {
-      executeSave(args);
+      executeAuthenticate(args);
       return true;
     } else if (action.equals("delete")) {
       executeDelete(args);
@@ -168,7 +167,7 @@ public class Fingerprint extends CordovaPlugin {
       oldEditor.commit();
     }
 
-    sendSuccess("ok boomer");
+    sendSuccess("OK");
   }
 
   private void executeDelete(JSONArray args) throws JSONException {
@@ -183,29 +182,20 @@ public class Fingerprint extends CordovaPlugin {
     if (removed) {
       sendSuccess("OK");
     } else {
-      sendError(0,"Error");
+      sendError(0,"Failed to remove key");
     }
   }
 
   private void executeHas(JSONArray args) throws JSONException {
     String key = args.getString(0);
-    Log.d("hasKey", key);
 
     SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
     String enc = sharedPref.getString("fing" + key, "");
 
-    Map<String, ?> allPrefs = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE).getAll();
-    
-    Log.d(TAG, "allPrefs length: " + allPrefs.size());
-    
-    for(Map.Entry<String, ?> entry : allPrefs.entrySet()){
-      Log.d("SharedPrefs", entry.getKey() + " = " + entry.getValue().toString());
-    }
-
     if (!enc.equals("")) {
       sendSuccess("OK");
     } else {
-      sendError(0,"Error");
+      sendError(PluginError.BIOMETRIC_NOT_ENROLLED);
     }
   }
   
@@ -225,7 +215,6 @@ public class Fingerprint extends CordovaPlugin {
   private void executeVerify(JSONArray args) throws JSONException {
     final String key = args.getString(0);
     final String message = args.getString(1);
-
 
     PluginError error = canAuthenticate();
 
@@ -255,7 +244,7 @@ public class Fingerprint extends CordovaPlugin {
     }
   }
 
-  private void executeSave(JSONArray args) throws JSONException {
+  private void executeAuthenticate(JSONArray args) throws JSONException {
     final String key = args.getString(0);
     final String password = args.getString(1);
     setUserAuthenticationRequired = args.get(2).equals(null) || args.getBoolean(2);
@@ -273,8 +262,6 @@ public class Fingerprint extends CordovaPlugin {
 
       keyID = key;
       toEncrypt = password;
-
-      Log.d(TAG, "save keyID : " + keyID);
 
       if (setUserAuthenticationRequired) {
         //Show fingerprint
@@ -328,7 +315,6 @@ public class Fingerprint extends CordovaPlugin {
           result = new String(decrypted);
         } else if (currentMode == Cipher.ENCRYPT_MODE && setUserAuthenticationRequired) {
           //If setUserAuthenticationRequired encript string with key after authenticate with fingerprint
-          Log.d(TAG, "encrypt keyID : " + keyID);
 
           SharedPreferences.Editor editor = sharedPref.edit();
 
@@ -347,13 +333,10 @@ public class Fingerprint extends CordovaPlugin {
         e.printStackTrace();
       }
 
-      Log.d(TAG + " - result", result);
-
       if (!result.equals("")) {
-        Log.d("Success", "result ok");
         sendSuccess(result);
       } else {
-        sendError(0, errorMessage); //TODO: RIGTIG ERROR CODE
+        sendError(0, "Cipher mode: " + currentMode + " failed");
       }
     } else if (intent != null) {
       Bundle extras = intent.getExtras();
@@ -361,23 +344,6 @@ public class Fingerprint extends CordovaPlugin {
     } else {
       sendError(PluginError.BIOMETRIC_DISMISSED);
     }
-  }
-
-  private void executeAuthenticate(JSONArray args) {
-    PluginError error = canAuthenticate();
-    if (error != null) {
-      sendError(error);
-      return;
-    }
-    cordova.getActivity().runOnUiThread(() -> {
-      mPromptInfoBuilder.parseArgs(args);
-      Intent intent = new Intent(cordova.getActivity().getApplicationContext(), BiometricActivity.class);
-      intent.putExtras(mPromptInfoBuilder.build().getBundle());
-      this.cordova.startActivityForResult(this, intent, REQUEST_CODE_BIOMETRIC);
-    });
-    PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-    pluginResult.setKeepCallback(true);
-    this.mCallbackContext.sendPluginResult(pluginResult);
   }
 
   private PluginError canAuthenticate() {
@@ -434,7 +400,7 @@ public class Fingerprint extends CordovaPlugin {
         keyGenerator.init(new KeyGenParameterSpec.Builder(CLIENT_ID,
           KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT).setBlockModes(
           KeyProperties.BLOCK_MODE_CBC)
-          .setUserAuthenticationRequired(false)
+          .setUserAuthenticationRequired(setUserAuthenticationRequired)
           .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
           .build());
       }
@@ -451,7 +417,6 @@ public class Fingerprint extends CordovaPlugin {
     }
     if (!isKeyCreated) {
       Log.e(TAG, errorMessage);
-      //TODO: Få en rigtige error code
       sendError(0, errorMessage);
     }
     return isKeyCreated;
@@ -488,7 +453,7 @@ public class Fingerprint extends CordovaPlugin {
         Log.e(TAG, error.getMessage());
       }
       errorMessage = "KeyPermanentlyInvalidatedException";
-      sendError(0, errorMessage); //TODO: Få rigtige error code
+      sendError(0, errorMessage);
     } catch (InvalidKeyException e) {
       errorMessage = initCipherExceptionErrorPrefix + "InvalidKeyException";
     } catch (InvalidAlgorithmParameterException e) {
