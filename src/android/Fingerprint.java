@@ -184,7 +184,9 @@ public class Fingerprint extends CordovaPlugin {
   }
 
   private void executeHas(JSONArray args) throws JSONException {
+    Log.d("hasKeyArgs", args.getString(0));
     String key = args.getString(0);
+    Log.d("hasKey", key);
 
     SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
     String enc = sharedPref.getString("fing" + key, "");
