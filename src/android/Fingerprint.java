@@ -83,7 +83,7 @@ public class Fingerprint extends CordovaPlugin {
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     super.initialize(cordova, webView);
     Log.v(TAG, "Init Fingerprint");
-    Log.v(TAG, "Testing");
+
     mPromptInfoBuilder = new PromptInfo.Builder(cordova.getActivity());
 
     if (android.os.Build.VERSION.SDK_INT < 23) {
@@ -351,7 +351,7 @@ public class Fingerprint extends CordovaPlugin {
 
       if (!result.equals("")) {
         Log.d("Success", "result ok");
-        sendSuccess("biometric_success");
+        sendSuccess(result);
       } else {
         sendError(0, errorMessage); //TODO: RIGTIG ERROR CODE
       }
