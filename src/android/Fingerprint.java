@@ -39,6 +39,7 @@ import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.spec.MGF1ParameterSpec;
 import java.util.Locale;
 import java.util.Map;
 
@@ -49,6 +50,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 
 
 public class Fingerprint extends CordovaPlugin {
@@ -461,13 +464,14 @@ public class Fingerprint extends CordovaPlugin {
     String initCipherExceptionErrorPrefix = "Failed to init Cipher: ";
     try {
       SecretKey key = getSecretKey();
+      OAEPParameterSpec spec = new OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT);
 
       if (mode == Cipher.ENCRYPT_MODE) {
         SecureRandom r = new SecureRandom();
         byte[] ivBytes = new byte[16];
         r.nextBytes(ivBytes);
 
-        cipher.init(mode, key);
+        cipher.init(mode, key, spec);
       } else {
         SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         byte[] ivBytes =
