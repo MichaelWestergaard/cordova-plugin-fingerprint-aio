@@ -434,7 +434,7 @@ public class Fingerprint extends CordovaPlugin {
         keyGenerator.init(new KeyGenParameterSpec.Builder(CLIENT_ID,
           KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT).setBlockModes(
           KeyProperties.BLOCK_MODE_CBC)
-          .setUserAuthenticationRequired(setUserAuthenticationRequired)
+          .setUserAuthenticationRequired(false)
           .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
           .build());
       }
@@ -464,14 +464,13 @@ public class Fingerprint extends CordovaPlugin {
     String initCipherExceptionErrorPrefix = "Failed to init Cipher: ";
     try {
       SecretKey key = getSecretKey();
-      OAEPParameterSpec spec = new OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT);
 
       if (mode == Cipher.ENCRYPT_MODE) {
         SecureRandom r = new SecureRandom();
         byte[] ivBytes = new byte[16];
         r.nextBytes(ivBytes);
 
-        cipher.init(mode, key, spec);
+        cipher.init(mode, key);
       } else {
         SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
         byte[] ivBytes =
