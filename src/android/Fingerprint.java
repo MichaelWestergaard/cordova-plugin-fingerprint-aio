@@ -117,6 +117,7 @@ public class Fingerprint extends CordovaPlugin {
 
     this.mCallbackContext = callbackContext;
     Log.v(TAG, "Fingerprint action: " + action);
+    Log.d(TAG, args.toString());
 
     if (action.equals("isAvailable")) {
       executeIsAvailable();
@@ -184,7 +185,6 @@ public class Fingerprint extends CordovaPlugin {
   }
 
   private void executeHas(JSONArray args) throws JSONException {
-    Log.d("hasKeyArgs", args.getString(0));
     String key = args.getString(0);
     Log.d("hasKey", key);
 
@@ -192,6 +192,9 @@ public class Fingerprint extends CordovaPlugin {
     String enc = sharedPref.getString("fing" + key, "");
 
     Map<String, ?> allPrefs = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE).getAll();
+    
+    Log.d(TAG, "allPrefs length: " + allPrefs.size());
+    
     for(Map.Entry<String, ?> entry : allPrefs.entrySet()){
       Log.d("SharedPrefs", entry.getKey() + " = " + entry.getValue().toString());
     }
@@ -268,6 +271,8 @@ public class Fingerprint extends CordovaPlugin {
       keyID = key;
       toEncrypt = password;
 
+      Log.d(TAG, "save keyID : " + keyID);
+
       if (setUserAuthenticationRequired) {
         //Show fingerprint
         showFingerprint(Cipher.ENCRYPT_MODE, args);
@@ -320,6 +325,8 @@ public class Fingerprint extends CordovaPlugin {
           result = new String(decrypted);
         } else if (currentMode == Cipher.ENCRYPT_MODE && setUserAuthenticationRequired) {
           //If setUserAuthenticationRequired encript string with key after authenticate with fingerprint
+          Log.d(TAG, "encrypt keyID : " + keyID);
+
           SharedPreferences.Editor editor = sharedPref.edit();
 
           byte[] enc = cipher.doFinal(toEncrypt.getBytes());
@@ -336,6 +343,8 @@ public class Fingerprint extends CordovaPlugin {
       } catch (IllegalBlockSizeException e) {
         e.printStackTrace();
       }
+
+      Log.d(TAG + " - result", result);
 
       if (!result.equals("")) {
         Log.d("Success", "result ok");
