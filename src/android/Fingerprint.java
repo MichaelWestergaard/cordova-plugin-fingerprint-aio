@@ -40,6 +40,7 @@ import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -188,6 +189,11 @@ public class Fingerprint extends CordovaPlugin {
     SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
     String enc = sharedPref.getString("fing" + key, "");
 
+    Map<String, ?> allPrefs = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE).getAll();
+    for(Map.Entry<String, ?> entry : allPrefs.entrySet()){
+      Log.d("SharedPrefs", entry.getKey() + " = " + entry.getValue().toString());
+    }
+
     if (!enc.equals("")) {
       sendSuccess("OK");
     } else {
@@ -330,6 +336,7 @@ public class Fingerprint extends CordovaPlugin {
       }
 
       if (!result.equals("")) {
+        Log.d("Success", "result ok");
         sendSuccess("biometric_success");
       } else {
         sendError(0, errorMessage); //TODO: RIGTIG ERROR CODE
