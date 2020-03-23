@@ -1,12 +1,13 @@
 import Foundation
 import LocalAuthentication
+/*
 import UIKit
 import "KeychainWrapper.h"
 import Cordova
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-/* Maybe for later if above does not work.
+ Maybe for later if above does not work.
 #import <UIKit/UIKit.h>
 #import "KeychainWrapper.h"
 #import <Foundation/Foundation.h>
